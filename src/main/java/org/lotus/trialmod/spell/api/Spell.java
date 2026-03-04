@@ -13,15 +13,17 @@ public abstract class Spell {
     private final ResourceLocation id;
     private final String description;
     private final int cooldown;
+    private final Component name;
 
     public Spell(ResourceLocation id, String description, int cooldown) {
         this.id= id;
         this.description = description;
         this.cooldown = cooldown;
+        this.name = Component.translatable("spell." + id.getNamespace() + "." + id.getPath());
     }
     
     public Component getName() {
-        return Component.translatable("spell." + id.getNamespace() + "." + id.getPath());
+        return name;
     }
 
     public abstract void cast(ServerPlayer player);

@@ -1,5 +1,6 @@
 package org.lotus.trialmod.spell.registry;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -22,5 +23,9 @@ public final class Spells {
 
     public static Spell get(ResourceLocation id) {
         return SPELLS.get(id);
+    }
+    
+    public static Collection<Spell> all() {
+        return SPELLS.values();
     }
 }
