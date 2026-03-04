@@ -1,7 +1,7 @@
-package org.lotus.trialmod.init;
+package org.lotus.trialmod.core.registry;
 
 import org.zeith.hammerlib.annotations.SimplyRegister;
 
 @SimplyRegister
-public interface ModBlocks {
+public interface ModItems {
 }

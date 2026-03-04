@@ -1,0 +1,6 @@
+{
+  "key.trialmod.cast_fireball": "Fireball",
+  "key.categories.trialmod": "TrialMod",
+  "spell.on_cooldown": "%s cooldown: %s s",
+  "spell.trialmod.fireball": "Fireball"
+}
