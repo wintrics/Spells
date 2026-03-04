@@ -1,6 +1,7 @@
 package org.lotus.trialmod.spell.packet;
 
 import org.lotus.trialmod.core.capability.ModCapabilities;
+import org.lotus.trialmod.spell.ServerActiveSpells;
 import org.lotus.trialmod.spell.registry.Spells;
 import org.zeith.hammerlib.net.INBTPacket;
 import org.zeith.hammerlib.net.MainThreaded;
@@ -40,7 +41,10 @@ public class PacketCastSpell implements INBTPacket {
         var spell = Spells.get(spellId);
         if (spell == null) return;
 
-        spell.castWithCooldown(player);
+        if(spell.castWithCooldown(player)) {
+    		ServerActiveSpells.start(player, spell);
+    		Network.sendTo(new PacketSpellEffect(spellId), player);
+        }
         
         player.getCapability(ModCapabilities.SPELL_DATA).ifPresent(data -> {
         	long endTick = data.getCooldownEndTick(spellId);
