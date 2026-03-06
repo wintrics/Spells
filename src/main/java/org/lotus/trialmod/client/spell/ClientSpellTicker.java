@@ -1,6 +1,7 @@
 package org.lotus.trialmod.client.spell;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.resources.ResourceLocation;
 import org.lotus.trialmod.TrialMod;
 import org.lotus.trialmod.spell.api.Spell;
@@ -18,31 +19,33 @@ public class ClientSpellTicker {
     public static void onStage(ResourceLocation id, SpellStage stage,
                                long stageStartTick, long cooldownStartTick) {
     	TrialMod.LOGGER.debug("spell {} stage {} start tick {} cooldown start tick {}", id, stage, stageStartTick, cooldownStartTick);
-        if (stage.equals(SpellStage.CASTING) || stage.equals(SpellStage.COOLDOWN)) {
-            add(new PlayerSpellData(
-                    id, stage, stageStartTick, cooldownStartTick
-            ));
-        } else if (stage.equals(SpellStage.ACTIVE)) {
-            PlayerSpellData old = get(id);
-            Spell spell = SpellRegister.get(id);
-            spell.effect(MC.player);
-            if (old != null && old.stage().equals(SpellStage.CASTING)
-                    && MC.player != null) {
-                spell.clientCastingEnd(MC.player);
-            }
-            add(new PlayerSpellData(
-                    id, stage, stageStartTick, cooldownStartTick
-            ));
-        } else if (stage.equals(SpellStage.END) || stage.equals(SpellStage.CANCEL)) {
-            PlayerSpellData old = get(id);
-            if (old != null && MC.player != null) {
-                Spell spell = SpellRegister.get(id);
-                if (spell != null) {
-                    if (old.stage().equals(SpellStage.CANCEL)) spell.clientCancel(MC.player);
-                    else spell.clientEnd(MC.player);
-                }
-            }
-        }
+    	
+    	PlayerSpellData oldData = get(id);
+    	Spell spell = SpellRegister.get(id);
+    	
+    	if (MC.player == null || spell == null) return;
+    	
+    	switch (stage) {
+		case  COOLDOWN: {
+			if (oldData != null) stage = oldData.stage();
+		} case ACTIVE: {
+				if (oldData != null) {
+					if (!oldData.stage().equals(SpellStage.ACTIVE)) spell.effect(MC.player);
+					if (oldData.stage().equals(SpellStage.CASTING)) spell.clientCastingEnd(MC.player);
+				}
+		} case END, CANCEL: {
+			if (oldData != null) {
+				if (oldData.stage().equals(SpellStage.END)) spell.clientEnd(MC.player);
+				else spell.clientCancel(MC.player);
+			}
+		}
+		default:
+			break;
+		}
+    	
+    	add(new PlayerSpellData(
+    			id, stage, stageStartTick, cooldownStartTick
+    	));
     }
 
     public static void tick() {
@@ -60,19 +63,25 @@ public class ClientSpellTicker {
             }
 
             int execute = (int) (current - data.startTick());
-
-            if (data.stage().equals(SpellStage.CASTING)) {
-                if (spell.getCastTicks() > 0 && execute < spell.getCastTicks()) {
-                    spell.clientCastingTick(MC.player, execute);
-                }
-                // TODO: добавить обработку
-            } else {
-                if (spell.getDurationTicks() > 0 && execute < spell.getDurationTicks()) {
-                    spell.clientTick(MC.player, execute);
-                }
-                // TODO: добавить обработку
+            
+            switch (data.stage()) {
+			case CASTING: tickCasting(spell, MC.player, execute);
+			case ACTIVE: tickActive(spell, MC.player, execute);
+			default: {}
             }
         }
+    }
+    
+    private static void tickCasting(Spell spell, LocalPlayer player, int  execute) {
+    	if (spell.getCastTicks() > 0 && execute < spell.getCastTicks()) {
+    		spell.clientCastingTick(player, execute);
+    	}
+    }
+    
+    private static void tickActive(Spell spell, LocalPlayer player, int execute) {
+    	if (spell.getDurationTicks() > 0 && execute < spell.getDurationTicks()) {
+    		spell.clientTick(player, execute);
+    	}
     }
 
     private static void add(PlayerSpellData data) {

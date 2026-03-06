@@ -47,4 +47,5 @@ public abstract class Spell {
 
     public void serverCancel(ServerPlayer player) {}
     public void clientCancel(LocalPlayer player) {}
+    
 }

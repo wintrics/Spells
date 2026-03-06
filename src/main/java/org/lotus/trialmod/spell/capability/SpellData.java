@@ -22,6 +22,14 @@ public class SpellData implements ISpellData {
         remove(data.id());
         dataList.add(data);
     }
+    
+    @Override
+    public PlayerSpellData getOrDefault(ResourceLocation id) {
+    	PlayerSpellData data = get(id);
+    	return data != null
+                ? data
+                        : new PlayerSpellData(id, SpellStage.IDLE, 0, 0);
+    }
 
     @Override
     public PlayerSpellData get(ResourceLocation id) {

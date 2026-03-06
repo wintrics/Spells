@@ -30,51 +30,37 @@ public class SpellTicker {
                 Spell spell = SpellRegister.get(data.id());
                 // сколько тиков длится текущий стейдж
                 int executeTick =(int)(currentTick - data.startTick());
-
                 if (spell == null) {
                     TrialMod.LOGGER.error("spell {} not found", data.id());
                     spellData.remove(data.id());
                     continue;
                 }
-
+                
+                PlayerSpellData newData = data;
+                PacketSpellStage packet = new PacketSpellStage(data.id(), data.stage(), currentTick, currentTick);
+                
                 if (data.stage().equals(SpellStage.CASTING)) {
-                    if (executeTick >= spell.getCastTicks()) {
-                        spell.serverCastingEnd(player);
-
-                        spell.casting(player);
-
-                        var newData = new PlayerSpellData(
-                                data.id(),
-                                SpellStage.ACTIVE,
-                                currentTick,
-                                currentTick
-                        );
-                        Network.sendTo(player, new PacketSpellStage(
-                                data.id(), SpellStage.ACTIVE,
-                                currentTick, currentTick
-                        ));
-
-                        list.set(i, newData);
-                    } else {
-                        spell.serverCastingTick(player, executeTick);
-                    }
+                	if (executeTick >= spell.getCastTicks()) {
+                		spell.serverCastingEnd(player);
+                		spell.casting(player);
+                		
+                		newData = new PlayerSpellData(data.id(), SpellStage.ACTIVE, currentTick, currentTick);
+                		packet = new PacketSpellStage(newData.id(), newData.stage(), currentTick, currentTick);
+                	} else {
+                		spell.serverCastingTick(player, executeTick);
+                	}
                 } else if(data.stage().equals(SpellStage.ACTIVE)) {
-                    if (executeTick >= spell.getDurationTicks()) {
-                        spell.serverEnd(player);
-                        var newData = new PlayerSpellData(
-                                data.id(),
-                                SpellStage.IDLE,
-                                currentTick,
-                                data.startCooldownTick()
-                        );
-                        list.set(i, newData);
-                        Network.sendTo(player, new PacketSpellStage(
-                                data.id(), SpellStage.IDLE,
-                                currentTick, data.startCooldownTick()
-                        ));
-                    } else {
-                        spell.serverTick(player, executeTick);
-                    }
+                	if (executeTick >= spell.getDurationTicks()) {
+                		newData = new PlayerSpellData(data.id(), SpellStage.IDLE, currentTick, data.startCooldownTick());
+                		packet = new PacketSpellStage(newData.id(), newData.stage(), currentTick, data.startCooldownTick());
+                	} else {
+                		spell.serverTick(player, executeTick);
+                	}
+                }
+                
+                if (newData != data) {
+	                list.set(i, newData);
+	                Network.sendTo(player, packet);
                 }
             }
         });

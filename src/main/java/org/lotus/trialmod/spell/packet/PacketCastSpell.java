@@ -48,65 +48,49 @@ public class PacketCastSpell implements INBTPacket {
         }
 
         player.getCapability(ModCapabilities.SPELL_DATA).ifPresent(dataList -> {
-            PlayerSpellData spellData = dataList.get(spellId);
-            
-            if (spellData == null) {
-				spellData = new PlayerSpellData(spellId, SpellStage.IDLE, 0, 0);
-			}
-
+            PlayerSpellData spellData = dataList.getOrDefault(spellId);
+            PlayerSpellData newData = spellData;
             SpellStage stage = spellData.stage();
             long currentTick = player.level().getGameTime();
+            PacketSpellStage packet = new PacketSpellStage(spellId, stage, currentTick, spellData.startCooldownTick());
 
-            int executeTick =(int)(currentTick - spellData.startCooldownTick());
-
+            int executeTick = (int)(currentTick - spellData.startCooldownTick());
+            
             if (executeTick < spell.getCooldownTicks()) {
-                long endTick = spellData.startCooldownTick()
-                        + SpellRegister.get(spellId).getCooldownTicks();
-                double seconds = (endTick - currentTick) / 20.0;
-
-                player.displayClientMessage(
-                        Component.translatable(
-                                "spell.on_cooldown",
-                                spell.getName(),
-                                String.format("%.1f", seconds)
-                        ),
-                        true
-                );
-
-                Network.sendTo(player, new PacketSpellStage(
-                        spellId, SpellStage.COOLDOWN,
-                        spellData.startCooldownTick(), spellData.startCooldownTick()
-                ));
-                TrialMod.LOGGER.debug("send to client sync cooldown {} {}",
-                        spellId, spellData.startCooldownTick());
-
-                return;
+              long endTick = spellData.startCooldownTick()
+              + SpellRegister.get(spellId).getCooldownTicks();
+		      double seconds = (endTick - currentTick) / 20.0;
+		
+		      player.displayClientMessage(
+		              Component.translatable(
+		                      "spell.on_cooldown",
+		                      spell.getName(),
+		                      String.format("%.1f", seconds)
+		              ),
+		              true
+		      );
+		      
+		      TrialMod.LOGGER.debug("send to client sync cooldown {} {}",
+                    spellId, spellData.startCooldownTick());
+		      packet.setStage(SpellStage.COOLDOWN);
             } else {
-                if (stage.equals(SpellStage.CASTING) || stage.equals(SpellStage.ACTIVE)) {
-                    player.displayClientMessage(
-                            Component.translatable(
-                                    "spell.already_active",
-                                    spell.getName()
-                            ),
-                            true
-                    );
-                    return;
-                }
-
-                dataList.add(new PlayerSpellData(
-                        spellId, SpellStage.CASTING, currentTick,
-                        0
-                ));
-
-                TrialMod.LOGGER.debug("send to client sync stage {} {}, start tick {} {}",
-                        spellId, SpellStage.CASTING, currentTick, spell.getCastTicks() > 0 ? 0 : currentTick);
-
-                Network.sendTo(player, new PacketSpellStage(
-                        spellId, SpellStage.CASTING,
-                        currentTick, 
-                        spell.getCastTicks() > 0 ? 0 : currentTick
-                ));
+              if (stage.equals(SpellStage.CASTING) || stage.equals(SpellStage.ACTIVE)) {
+	              player.displayClientMessage(
+	                      Component.translatable(
+	                              "spell.already_active",
+	                              spell.getName()
+	                      ),
+	                      true
+	              );
+	              return;
+	          }
+              
+              newData.setStage(SpellStage.CASTING);
+              packet.setStage(SpellStage.CASTING);
             }
+            
+            dataList.add(newData);
+            Network.sendTo(player, packet);
         });
     }
 }

@@ -9,7 +9,10 @@ import org.zeith.hammerlib.net.INBTPacket;
 import org.zeith.hammerlib.net.MainThreaded;
 import org.zeith.hammerlib.net.PacketContext;
 
+import lombok.Setter;
+
 @MainThreaded
+@Setter
 public class PacketSpellStage implements INBTPacket {
     private ResourceLocation id;
     private SpellStage stage;
