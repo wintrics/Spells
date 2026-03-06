@@ -8,7 +8,6 @@ import net.minecraftforge.event.AttachCapabilitiesEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
-
 import org.lotus.trialmod.TrialMod;
 import org.lotus.trialmod.core.capability.ModCapabilities;
 
@@ -20,31 +19,31 @@ public class SpellCapabilityEvents {
     @SubscribeEvent
     public static void attachCaps(AttachCapabilitiesEvent<Entity> event) {
         if (event.getObject() instanceof Player) {
-			SpellDataProvider provider = new SpellDataProvider();
-			event.addCapability(KEY, provider);
-			event.addListener(provider::invalidate);
-		}
+            SpellDataProvider provider = new SpellDataProvider();
+            event.addCapability(KEY, provider);
+            event.addListener(provider::invalidate);
+        }
     }
-    
+
     @SubscribeEvent
     public static void onPlayerClone(PlayerEvent.Clone event) {
-    	var oldPlayer = event.getOriginal();
-    	var newPlayer = event.getEntity();
-    	
-    	oldPlayer.reviveCaps();
-    	
-    	oldPlayer.getCapability(ModCapabilities.SPELL_DATA).ifPresent(oldData -> {
-			newPlayer.getCapability(ModCapabilities.SPELL_DATA).ifPresent(newData -> {
-				if (oldData instanceof SpellData od && newData instanceof SpellData nd) {
-					nd.deserializeNBT(od.serializeNBT());
-				}
-			});
-		});
-    	
-    	oldPlayer.invalidateCaps();
+        var oldPlayer = event.getOriginal();
+        var newPlayer = event.getEntity();
+
+        oldPlayer.reviveCaps();
+
+        oldPlayer.getCapability(ModCapabilities.SPELL_DATA).ifPresent(oldData -> {
+            newPlayer.getCapability(ModCapabilities.SPELL_DATA).ifPresent(newData -> {
+                if (oldData instanceof SpellData od && newData instanceof SpellData nd) {
+                    nd.deserializeNBT(od.serializeNBT());
+                }
+            });
+        });
+
+        oldPlayer.invalidateCaps();
     }
-    
-    @net.minecraftforge.eventbus.api.SubscribeEvent
+
+    @SubscribeEvent
     public static void registerCaps(RegisterCapabilitiesEvent event) {
         event.register(ISpellData.class);
     }

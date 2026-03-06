@@ -13,10 +13,9 @@ public class SpellDataProvider implements ICapabilitySerializable<CompoundTag> {
     private final SpellData data = new SpellData();
     private final LazyOptional<ISpellData> optional = LazyOptional.of(() -> data);
 
-
     @Override
-    public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> capability, @Nullable Direction direction) {
-        return capability == ModCapabilities.SPELL_DATA ? optional.cast() : LazyOptional.empty();
+    public @NotNull <T> LazyOptional<T> getCapability(@NotNull Capability<T> cap, @Nullable Direction side) {
+        return cap == ModCapabilities.SPELL_DATA ? optional.cast() : LazyOptional.empty();
     }
 
     @Override
@@ -25,11 +24,11 @@ public class SpellDataProvider implements ICapabilitySerializable<CompoundTag> {
     }
 
     @Override
-    public void deserializeNBT(CompoundTag compoundTag) {
-        data.deserializeNBT(compoundTag);
+    public void deserializeNBT(CompoundTag nbt) {
+        data.deserializeNBT(nbt);
     }
-    
+
     public void invalidate() {
-		optional.invalidate();
-	}
+        optional.invalidate();
+    }
 }

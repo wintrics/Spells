@@ -1,22 +1,17 @@
 package org.lotus.trialmod.spell.capability;
 
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.server.level.ServerPlayer;
+
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 public interface ISpellData {
-    long getCooldownEndTick(ResourceLocation spellId);
+    List<PlayerSpellData> getAll();
 
-    default boolean isOnCooldown(ResourceLocation spellId, ServerPlayer player) {
-    	long current = player.serverLevel().getGameTime();
-        return getCooldownEndTick(spellId) > current;
-    }
-
-    void setCooldownEndTick(ResourceLocation spellId, long endTick);
-
-    default void startCooldown(ResourceLocation spellId, ServerPlayer player, long duration) {
-    	long current = player.serverLevel().getGameTime();
-        setCooldownEndTick(spellId, current + duration);
-    }
-
+    void add(PlayerSpellData data);
+    PlayerSpellData get(ResourceLocation id);
+    void remove(ResourceLocation id);
+    boolean has(ResourceLocation id);
     void clear();
 }

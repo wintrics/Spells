@@ -5,7 +5,6 @@ import org.lotus.trialmod.spell.api.Spell;
 
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -13,7 +12,6 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.entity.item.FallingBlockEntity;
 import net.minecraft.world.entity.item.PrimedTnt;
 import net.minecraft.world.entity.projectile.LargeFireball;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.Vec3;
 
@@ -21,11 +19,11 @@ public class FireballSpell extends Spell {
 
 	public FireballSpell() {
 		super(ResourceLocation.fromNamespaceAndPath(TrialMod.MODID, "fireball"), 
-				"Test fireball spell", 20 * 5, 20 * 10);
+				"Test fireball spell", 0, 20 * 10, 20 * 5);
 	}
 
 	@Override
-	public void cast(ServerPlayer player) {
+	public void casting(ServerPlayer player) {
 		Vec3 look = player.getLookAngle();
 		
 		LargeFireball fireball = new LargeFireball(

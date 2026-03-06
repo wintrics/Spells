@@ -4,60 +4,88 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.resources.ResourceLocation;
+import org.lotus.trialmod.TrialMod;
+import org.lotus.trialmod.spell.api.SpellStage;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public class SpellData implements ISpellData {
-    private static final String SPELL_ID = "spellId";
-    private static final String END_TICK = "endTick";
-    private static final String COOLDOWNS = "cooldowns";
-
-    private final Map<ResourceLocation, Long> cooldowns = new HashMap<>();
+    private final List<PlayerSpellData> dataList = new ArrayList<>();
 
     @Override
-    public long getCooldownEndTick(ResourceLocation spellId) {
-        return cooldowns.getOrDefault(spellId, 0L);
+    public List<PlayerSpellData> getAll() {
+        return dataList;
     }
 
     @Override
-    public void setCooldownEndTick(ResourceLocation spellId, long endTick) {
-        if (endTick <= 0) cooldowns.remove(spellId);
-        else cooldowns.put(spellId, endTick);
+    public void add(PlayerSpellData data) {
+        remove(data.id());
+        dataList.add(data);
+    }
+
+    @Override
+    public PlayerSpellData get(ResourceLocation id) {
+        return dataList.stream()
+                .filter(i -> i.id().equals(id))
+                .findFirst()
+                .orElse(null);
+    }
+
+    @Override
+    public void remove(ResourceLocation id) {
+        dataList.removeIf(i -> i.id().equals(id));
+    }
+
+    @Override
+    public boolean has(ResourceLocation id) {
+        return dataList.stream().anyMatch(i -> i.id().equals(id));
     }
 
     @Override
     public void clear() {
-        cooldowns.clear();
+        dataList.clear();
     }
 
     public CompoundTag serializeNBT() {
         CompoundTag root = new CompoundTag();
         ListTag list = new ListTag();
 
-        for (var e : cooldowns.entrySet()) {
+        for (PlayerSpellData data : dataList) {
             CompoundTag tag = new CompoundTag();
-            tag.putString(SPELL_ID, e.getKey().toString());
-            tag.putLong(END_TICK, e.getValue());
+            tag.putString("id", data.id().toString());
+            tag.putInt("stage", data.stage().ordinal());
+            tag.putLong("start_tick", data.startTick());
+            tag.putLong("start_cooldown", data.startCooldownTick());
             list.add(tag);
         }
 
-        root.put(COOLDOWNS, list);
+        root.put("spell_list", list);
         return root;
     }
 
     public void deserializeNBT(CompoundTag root) {
-        cooldowns.clear();
-        ListTag list = root.getList(COOLDOWNS, Tag.TAG_COMPOUND);
+        dataList.clear();
+        ListTag list = root.getList("spell_list", Tag.TAG_COMPOUND);
 
         for (int i = 0; i < list.size(); i++) {
             CompoundTag tag = list.getCompound(i);
-            ResourceLocation spellId = ResourceLocation.tryParse(tag.getString(SPELL_ID));
-
-            if (spellId != null) {
-                long endTick = tag.getLong(END_TICK);
-                cooldowns.put(spellId, endTick);
+            String idStr = tag.getString("id");
+            ResourceLocation id = ResourceLocation.tryParse(idStr);
+            if (id == null) {
+                TrialMod.LOGGER.error("id {} not found", idStr);
+                continue;
             }
+
+            int stageId = tag.getInt("stage");
+            SpellStage stage = SpellStage.getById(stageId);
+            if (stage == null) {
+                TrialMod.LOGGER.error("invalid spell stage {} for spell {}", stageId, id);
+                continue;
+            }
+
+            long startTick = tag.getLong("start_tick");
+            long startCooldownTick = tag.getLong("start_cooldown");
+            this.add(new PlayerSpellData(id, stage, startTick, startCooldownTick));
         }
     }
 }
